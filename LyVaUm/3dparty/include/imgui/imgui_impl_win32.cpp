@@ -118,6 +118,8 @@ static ImGui_ImplWin32_Data* ImGui_ImplWin32_GetBackendData()
 // Functions
 static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
 
@@ -165,6 +167,8 @@ static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 #endif // IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 
     return true;
+
+    
 }
 
 IMGUI_IMPL_API bool     ImGui_ImplWin32_Init(void* hwnd)
@@ -180,6 +184,8 @@ IMGUI_IMPL_API bool     ImGui_ImplWin32_InitForOpenGL(void* hwnd)
 
 void    ImGui_ImplWin32_Shutdown()
 {
+    
+
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
@@ -194,10 +200,14 @@ void    ImGui_ImplWin32_Shutdown()
     io.BackendPlatformUserData = nullptr;
     io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad);
     IM_DELETE(bd);
+
+    
 }
 
 static bool ImGui_ImplWin32_UpdateMouseCursor()
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
         return false;
@@ -227,6 +237,8 @@ static bool ImGui_ImplWin32_UpdateMouseCursor()
         ::SetCursor(::LoadCursor(nullptr, win32_cursor));
     }
     return true;
+
+    
 }
 
 static bool IsVkDown(int vk)
@@ -244,6 +256,8 @@ static void ImGui_ImplWin32_AddKeyEvent(ImGuiKey key, bool down, int native_keyc
 
 static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds()
 {
+    
+
     // Left & right Shift keys: when both are pressed together, Windows tend to not generate the WM_KEYUP event for the first released one.
     if (ImGui::IsKeyDown(ImGuiKey_LeftShift) && !IsVkDown(VK_LSHIFT))
         ImGui_ImplWin32_AddKeyEvent(ImGuiKey_LeftShift, false, VK_LSHIFT);
@@ -255,6 +269,8 @@ static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds()
         ImGui_ImplWin32_AddKeyEvent(ImGuiKey_LeftSuper, false, VK_LWIN);
     if (ImGui::IsKeyDown(ImGuiKey_RightSuper) && !IsVkDown(VK_RWIN))
         ImGui_ImplWin32_AddKeyEvent(ImGuiKey_RightSuper, false, VK_RWIN);
+
+    
 }
 
 static void ImGui_ImplWin32_UpdateKeyModifiers()
@@ -268,6 +284,8 @@ static void ImGui_ImplWin32_UpdateKeyModifiers()
 
 static void ImGui_ImplWin32_UpdateMouseData()
 {
+    
+
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(bd->hWnd != 0);
@@ -293,11 +311,15 @@ static void ImGui_ImplWin32_UpdateMouseData()
                 io.AddMousePosEvent((float)pos.x, (float)pos.y);
         }
     }
+
+    
 }
 
 // Gamepad navigation mapping
 static void ImGui_ImplWin32_UpdateGamepads()
 {
+    
+
 #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
@@ -350,10 +372,14 @@ static void ImGui_ImplWin32_UpdateGamepads()
     #undef MAP_BUTTON
     #undef MAP_ANALOG
 #endif // #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
+
+    
 }
 
 void    ImGui_ImplWin32_NewFrame()
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
@@ -385,6 +411,8 @@ void    ImGui_ImplWin32_NewFrame()
 
     // Update game controllers (if enabled and available)
     ImGui_ImplWin32_UpdateGamepads();
+
+    
 }
 
 // There is no distinct VK_xxx for keypad enter, instead it is VK_RETURN + KF_EXTENDED, we assign it an arbitrary value to make code more readable (VK_ codes go up to 255)
@@ -393,6 +421,8 @@ void    ImGui_ImplWin32_NewFrame()
 // Map VK_xxx to ImGuiKey_xxx.
 static ImGuiKey ImGui_ImplWin32_VirtualKeyToImGuiKey(WPARAM wParam)
 {
+    
+
     switch (wParam)
     {
         case VK_TAB: return ImGuiKey_Tab;
@@ -501,6 +531,8 @@ static ImGuiKey ImGui_ImplWin32_VirtualKeyToImGuiKey(WPARAM wParam)
         case VK_F12: return ImGuiKey_F12;
         default: return ImGuiKey_None;
     }
+
+    
 }
 
 // Allow compilation with old Windows SDK. MinGW doesn't have default _WIN32_WINNT/WINVER versions.
@@ -538,6 +570,8 @@ static ImGuiMouseSource GetMouseSourceFromMessageExtraInfo()
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    
+
     if (ImGui::GetCurrentContext() == nullptr)
         return 0;
 
@@ -698,6 +732,8 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         return 0;
     }
     return 0;
+
+    
 }
 
 
@@ -719,6 +755,8 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
 // require a manifest to be functional for checks above 8.1. See https://github.com/ocornut/imgui/issues/4200
 static BOOL _IsWindowsVersionOrGreater(WORD major, WORD minor, WORD)
 {
+    
+
     typedef LONG(WINAPI* PFN_RtlVerifyVersionInfo)(OSVERSIONINFOEXW*, ULONG, ULONGLONG);
     static PFN_RtlVerifyVersionInfo RtlVerifyVersionInfoFn = nullptr;
 	if (RtlVerifyVersionInfoFn == nullptr)
@@ -735,6 +773,8 @@ static BOOL _IsWindowsVersionOrGreater(WORD major, WORD minor, WORD)
 	VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
 	VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
 	return (RtlVerifyVersionInfoFn(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, conditionMask) == 0) ? TRUE : FALSE;
+
+    
 }
 
 #define _IsWindowsVistaOrGreater()   _IsWindowsVersionOrGreater(HIBYTE(0x0600), LOBYTE(0x0600), 0) // _WIN32_WINNT_VISTA
@@ -760,6 +800,8 @@ typedef DPI_AWARENESS_CONTEXT(WINAPI* PFN_SetThreadDpiAwarenessContext)(DPI_AWAR
 // Helper function to enable DPI awareness without setting up a manifest
 void ImGui_ImplWin32_EnableDpiAwareness()
 {
+    
+
     if (_IsWindows10OrGreater())
     {
         static HINSTANCE user32_dll = ::LoadLibraryA("user32.dll"); // Reference counted per-process
@@ -781,6 +823,8 @@ void ImGui_ImplWin32_EnableDpiAwareness()
 #if _WIN32_WINNT >= 0x0600
     ::SetProcessDPIAware();
 #endif
+
+    
 }
 
 #if defined(_MSC_VER) && !defined(NOGDI)
@@ -789,6 +833,8 @@ void ImGui_ImplWin32_EnableDpiAwareness()
 
 float ImGui_ImplWin32_GetDpiScaleForMonitor(void* monitor)
 {
+    
+
     UINT xdpi = 96, ydpi = 96;
     if (_IsWindows8Point1OrGreater())
     {
@@ -811,6 +857,8 @@ float ImGui_ImplWin32_GetDpiScaleForMonitor(void* monitor)
     ::ReleaseDC(nullptr, dc);
 #endif
     return xdpi / 96.0f;
+
+    
 }
 
 float ImGui_ImplWin32_GetDpiScaleForHwnd(void* hwnd)
@@ -832,6 +880,8 @@ float ImGui_ImplWin32_GetDpiScaleForHwnd(void* hwnd)
 // (the Dwm* functions are Vista era functions but we are borrowing logic from GLFW)
 void ImGui_ImplWin32_EnableAlphaCompositing(void* hwnd)
 {
+    
+
     if (!_IsWindowsVistaOrGreater())
         return;
 
@@ -857,6 +907,8 @@ void ImGui_ImplWin32_EnableAlphaCompositing(void* hwnd)
         bb.dwFlags = DWM_BB_ENABLE;
         ::DwmEnableBlurBehindWindow((HWND)hwnd, &bb);
     }
+
+    
 }
 
 //---------------------------------------------------------------------------------------------------------

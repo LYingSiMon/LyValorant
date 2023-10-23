@@ -1,3 +1,4 @@
+
 // dear imgui, v1.89.8
 // (demo code)
 
@@ -243,6 +244,8 @@ void*                               GImGuiDemoMarkerCallbackUserData = NULL;
 // You may then search for keywords in the code when you are interested by a specific feature.
 void ImGui::ShowDemoWindow(bool* p_open)
 {
+    
+
     // Exceptionally add an extra assert here for people confused about initial Dear ImGui setup
     // Most functions would normally just crash if the context is missing.
     IM_ASSERT(ImGui::GetCurrentContext() != NULL && "Missing dear imgui context. Refer to examples app!");
@@ -553,10 +556,14 @@ void ImGui::ShowDemoWindow(bool* p_open)
     // End of ShowDemoWindow()
     ImGui::PopItemWidth();
     ImGui::End();
+
+    
 }
 
 static void ShowDemoWindowWidgets()
 {
+    
+
     IMGUI_DEMO_MARKER("Widgets");
     if (!ImGui::CollapsingHeader("Widgets"))
         return;
@@ -2625,10 +2632,14 @@ static void ShowDemoWindowWidgets()
                 ImGui::BulletText("%s", lines[i]);
         ImGui::TreePop();
     }
+
+    
 }
 
 static void ShowDemoWindowLayout()
 {
+    
+
     IMGUI_DEMO_MARKER("Layout");
     if (!ImGui::CollapsingHeader("Layout & Scrolling"))
         return;
@@ -3438,10 +3449,14 @@ static void ShowDemoWindowLayout()
 
         ImGui::TreePop();
     }
+
+    
 }
 
 static void ShowDemoWindowPopups()
 {
+    
+
     IMGUI_DEMO_MARKER("Popups");
     if (!ImGui::CollapsingHeader("Popups & Modal windows"))
         return;
@@ -3735,6 +3750,8 @@ static void ShowDemoWindowPopups()
         ImGui::Separator();
         ImGui::TreePop();
     }
+
+    
 }
 
 // Dummy data structure that we use for the Table demo.
@@ -3818,6 +3835,8 @@ static void PopStyleCompact()
 // Show a combo box with a choice of sizing policies
 static void EditTableSizingFlags(ImGuiTableFlags* p_flags)
 {
+    
+
     struct EnumDesc { ImGuiTableFlags Value; const char* Name; const char* Tooltip; };
     static const EnumDesc policies[] =
     {
@@ -3855,10 +3874,14 @@ static void EditTableSizingFlags(ImGuiTableFlags* p_flags)
         ImGui::PopTextWrapPos();
         ImGui::EndTooltip();
     }
+
+    
 }
 
 static void EditTableColumnsFlags(ImGuiTableColumnFlags* p_flags)
 {
+    
+
     ImGui::CheckboxFlags("_Disabled", p_flags, ImGuiTableColumnFlags_Disabled); ImGui::SameLine(); HelpMarker("Master disable flag (also hide from context menu)");
     ImGui::CheckboxFlags("_DefaultHide", p_flags, ImGuiTableColumnFlags_DefaultHide);
     ImGui::CheckboxFlags("_DefaultSort", p_flags, ImGuiTableColumnFlags_DefaultSort);
@@ -3879,6 +3902,8 @@ static void EditTableColumnsFlags(ImGuiTableColumnFlags* p_flags)
     ImGui::CheckboxFlags("_PreferSortDescending", p_flags, ImGuiTableColumnFlags_PreferSortDescending);
     ImGui::CheckboxFlags("_IndentEnable", p_flags, ImGuiTableColumnFlags_IndentEnable); ImGui::SameLine(); HelpMarker("Default for column 0");
     ImGui::CheckboxFlags("_IndentDisable", p_flags, ImGuiTableColumnFlags_IndentDisable); ImGui::SameLine(); HelpMarker("Default for column >0");
+
+    
 }
 
 static void ShowTableColumnsStatusFlags(ImGuiTableColumnFlags flags)
@@ -3891,6 +3916,8 @@ static void ShowTableColumnsStatusFlags(ImGuiTableColumnFlags flags)
 
 static void ShowDemoWindowTables()
 {
+    
+
     //ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     IMGUI_DEMO_MARKER("Tables");
     if (!ImGui::CollapsingHeader("Tables & Columns"))
@@ -5618,12 +5645,16 @@ static void ShowDemoWindowTables()
 
     if (disable_indent)
         ImGui::PopStyleVar();
+
+    
 }
 
 // Demonstrate old/legacy Columns API!
 // [2020: Columns are under-featured and not maintained. Prefer using the more flexible and powerful BeginTable() API!]
 static void ShowDemoWindowColumns()
 {
+    
+
     IMGUI_DEMO_MARKER("Columns (legacy API)");
     bool open = ImGui::TreeNode("Legacy Columns API");
     ImGui::SameLine();
@@ -5824,10 +5855,14 @@ static void ShowDemoWindowColumns()
     }
 
     ImGui::TreePop();
+
+    
 }
 
 static void ShowDemoWindowInputs()
 {
+    
+
     IMGUI_DEMO_MARKER("Inputs & Focus");
     if (ImGui::CollapsingHeader("Inputs & Focus"))
     {
@@ -6027,6 +6062,8 @@ static void ShowDemoWindowInputs()
             ImGui::TreePop();
         }
     }
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -6036,6 +6073,8 @@ static void ShowDemoWindowInputs()
 
 void ImGui::ShowAboutWindow(bool* p_open)
 {
+    
+
     if (!ImGui::Begin("About Dear ImGui", p_open, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::End();
@@ -6176,6 +6215,8 @@ void ImGui::ShowAboutWindow(bool* p_open)
         ImGui::EndChildFrame();
     }
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -6193,6 +6234,8 @@ namespace ImGui { IMGUI_API void ShowFontAtlas(ImFontAtlas* atlas); }
 // Here we use the regular BeginCombo()/EndCombo() api which is the more flexible one.
 void ImGui::ShowFontSelector(const char* label)
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     ImFont* font_current = ImGui::GetFont();
     if (ImGui::BeginCombo(label, font_current->GetDebugName()))
@@ -6213,6 +6256,8 @@ void ImGui::ShowFontSelector(const char* label)
         "- The font atlas is built when calling io.Fonts->GetTexDataAsXXXX() or io.Fonts->Build().\n"
         "- Read FAQ and docs/FONTS.md for more details.\n"
         "- If you need to add/remove fonts at runtime (e.g. for DPI change), do it before calling NewFrame().");
+
+    
 }
 
 // Demo helper function to select among default colors. See ShowStyleEditor() for more advanced options.
@@ -6220,6 +6265,8 @@ void ImGui::ShowFontSelector(const char* label)
 // Useful for quick combo boxes where the choices are known locally.
 bool ImGui::ShowStyleSelector(const char* label)
 {
+    
+
     static int style_idx = -1;
     if (ImGui::Combo(label, &style_idx, "Dark\0Light\0Classic\0"))
     {
@@ -6232,10 +6279,14 @@ bool ImGui::ShowStyleSelector(const char* label)
         return true;
     }
     return false;
+
+    
 }
 
 void ImGui::ShowStyleEditor(ImGuiStyle* ref)
 {
+    
+
     IMGUI_DEMO_MARKER("Tools/Style Editor");
     // You can pass in a reference ImGuiStyle structure to compare to, revert to and save to
     // (without a reference style pointer, we will use one compared locally as a reference)
@@ -6501,6 +6552,8 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
     }
 
     ImGui::PopItemWidth();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -6509,6 +6562,8 @@ void ImGui::ShowStyleEditor(ImGuiStyle* ref)
 
 void ImGui::ShowUserGuide()
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     ImGui::BulletText("Double-click on title bar to collapse window.");
     ImGui::BulletText(
@@ -6535,6 +6590,8 @@ void ImGui::ShowUserGuide()
     ImGui::BulletText("Escape to deactivate a widget, close popup, exit child window.");
     ImGui::BulletText("Alt to jump to the menu layer of a window.");
     ImGui::Unindent();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -6550,6 +6607,8 @@ void ImGui::ShowUserGuide()
 // - BeginMainMenuBar() = helper to create menu-bar-sized window at the top of the main viewport + call BeginMenuBar() into it.
 static void ShowExampleAppMainMenuBar()
 {
+    
+
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File"))
@@ -6569,12 +6628,16 @@ static void ShowExampleAppMainMenuBar()
         }
         ImGui::EndMainMenuBar();
     }
+
+    
 }
 
 // Note that shortcuts are currently provided for display only
 // (future version will add explicit flags to BeginMenu() to request processing shortcuts)
 static void ShowExampleMenuFile()
 {
+    
+
     IMGUI_DEMO_MARKER("Examples/Menu");
     ImGui::MenuItem("(demo menu)", NULL, false, false);
     if (ImGui::MenuItem("New")) {}
@@ -6652,6 +6715,8 @@ static void ShowExampleMenuFile()
     if (ImGui::MenuItem("Checked", NULL, true)) {}
     ImGui::Separator();
     if (ImGui::MenuItem("Quit", "Alt+F4")) {}
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -6721,6 +6786,8 @@ struct ExampleAppConsole
 
     void    Draw(const char* title, bool* p_open)
     {
+        
+
         ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin(title, p_open))
         {
@@ -6858,10 +6925,14 @@ struct ExampleAppConsole
             ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 
         ImGui::End();
+
+        
     }
 
     void    ExecCommand(const char* command_line)
     {
+        
+
         AddLog("# %s\n", command_line);
 
         // Insert into history. First find match and delete it so it can be pushed to the back.
@@ -6900,6 +6971,8 @@ struct ExampleAppConsole
 
         // On command input, we scroll to bottom even if AutoScroll==false
         ScrollToBottom = true;
+
+        
     }
 
     // In C++11 you'd be better off using lambdas for this sort of forwarding callbacks
@@ -6911,6 +6984,8 @@ struct ExampleAppConsole
 
     int     TextEditCallback(ImGuiInputTextCallbackData* data)
     {
+        
+
         //AddLog("cursor: %d, selection: %d-%d", data->CursorPos, data->SelectionStart, data->SelectionEnd);
         switch (data->EventFlag)
         {
@@ -7008,6 +7083,8 @@ struct ExampleAppConsole
             }
         }
         return 0;
+
+        
     }
 };
 
@@ -7059,6 +7136,8 @@ struct ExampleAppLog
 
     void    Draw(const char* title, bool* p_open = NULL)
     {
+        
+
         if (!ImGui::Begin(title, p_open))
         {
             ImGui::End();
@@ -7145,12 +7224,16 @@ struct ExampleAppLog
         }
         ImGui::EndChild();
         ImGui::End();
+
+        
     }
 };
 
 // Demonstrate creating a simple log window with basic filtering.
 static void ShowExampleAppLog(bool* p_open)
 {
+    
+
     static ExampleAppLog log;
 
     // For the demo: add a debug button _BEFORE_ the normal log window contents
@@ -7177,6 +7260,8 @@ static void ShowExampleAppLog(bool* p_open)
 
     // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
     log.Draw("Example: Log", p_open);
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7186,6 +7271,8 @@ static void ShowExampleAppLog(bool* p_open)
 // Demonstrate create a window with multiple child windows.
 static void ShowExampleAppLayout(bool* p_open)
 {
+    
+
     ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Example: Simple layout", p_open, ImGuiWindowFlags_MenuBar))
     {
@@ -7244,6 +7331,8 @@ static void ShowExampleAppLayout(bool* p_open)
         }
     }
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7252,6 +7341,8 @@ static void ShowExampleAppLayout(bool* p_open)
 
 static void ShowPlaceholderObject(const char* prefix, int uid)
 {
+    
+
     // Use object uid as identifier. Most commonly you could also use the object pointer as a base ID.
     ImGui::PushID(uid);
 
@@ -7295,11 +7386,15 @@ static void ShowPlaceholderObject(const char* prefix, int uid)
         ImGui::TreePop();
     }
     ImGui::PopID();
+
+    
 }
 
 // Demonstrate create a simple property editor.
 static void ShowExampleAppPropertyEditor(bool* p_open)
 {
+    
+
     ImGui::SetNextWindowSize(ImVec2(430, 450), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Example: Property editor", p_open))
     {
@@ -7327,6 +7422,8 @@ static void ShowExampleAppPropertyEditor(bool* p_open)
     }
     ImGui::PopStyleVar();
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7336,6 +7433,8 @@ static void ShowExampleAppPropertyEditor(bool* p_open)
 // Demonstrate/test rendering huge amount of text, and the incidence of clipping.
 static void ShowExampleAppLongText(bool* p_open)
 {
+    
+
     ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Example: Long text display", p_open))
     {
@@ -7390,6 +7489,8 @@ static void ShowExampleAppLongText(bool* p_open)
     }
     ImGui::EndChild();
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7399,6 +7500,8 @@ static void ShowExampleAppLongText(bool* p_open)
 // Demonstrate creating a window which gets auto-resized according to its content.
 static void ShowExampleAppAutoResize(bool* p_open)
 {
+    
+
     if (!ImGui::Begin("Example: Auto-resizing window", p_open, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::End();
@@ -7415,6 +7518,8 @@ static void ShowExampleAppAutoResize(bool* p_open)
     for (int i = 0; i < lines; i++)
         ImGui::Text("%*sThis is line %d", i * 4, "", i); // Pad with space to extend size horizontally
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7425,6 +7530,8 @@ static void ShowExampleAppAutoResize(bool* p_open)
 // Note that size constraints currently don't work on a docked window (when in 'docking' branch)
 static void ShowExampleAppConstrainedResize(bool* p_open)
 {
+    
+
     struct CustomConstraints
     {
         // Helper functions to demonstrate programmatic constraints
@@ -7500,6 +7607,8 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
         }
     }
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7510,6 +7619,8 @@ static void ShowExampleAppConstrainedResize(bool* p_open)
 // + a context-menu to choose which corner of the screen to use.
 static void ShowExampleAppSimpleOverlay(bool* p_open)
 {
+    
+
     static int location = 0;
     ImGuiIO& io = ImGui::GetIO();
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
@@ -7556,6 +7667,8 @@ static void ShowExampleAppSimpleOverlay(bool* p_open)
         }
     }
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7565,6 +7678,8 @@ static void ShowExampleAppSimpleOverlay(bool* p_open)
 // Demonstrate creating a window covering the entire screen/viewport
 static void ShowExampleAppFullscreen(bool* p_open)
 {
+    
+
     static bool use_work_area = true;
     static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
@@ -7592,6 +7707,8 @@ static void ShowExampleAppFullscreen(bool* p_open)
             *p_open = false;
     }
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7603,6 +7720,8 @@ static void ShowExampleAppFullscreen(bool* p_open)
 // Read FAQ section "How can I have multiple widgets with the same label?" for details.
 static void ShowExampleAppWindowTitles(bool*)
 {
+    
+
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     const ImVec2 base_pos = viewport->Pos;
 
@@ -7628,6 +7747,8 @@ static void ShowExampleAppWindowTitles(bool*)
     ImGui::Begin(buf);
     ImGui::Text("This window has a changing title.");
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7637,6 +7758,8 @@ static void ShowExampleAppWindowTitles(bool*)
 // Demonstrate using the low-level ImDrawList to draw custom shapes.
 static void ShowExampleAppCustomRendering(bool* p_open)
 {
+    
+
     if (!ImGui::Begin("Example: Custom rendering", p_open))
     {
         ImGui::End();
@@ -7870,6 +7993,8 @@ static void ShowExampleAppCustomRendering(bool* p_open)
     }
 
     ImGui::End();
+
+    
 }
 
 //-----------------------------------------------------------------------------
@@ -7902,6 +8027,8 @@ struct MyDocument
     // Display placeholder contents for the Document
     static void DisplayContents(MyDocument* doc)
     {
+        
+
         ImGui::PushID(doc);
         ImGui::Text("Document \"%s\"", doc->Name);
         ImGui::PushStyleColor(ImGuiCol_Text, doc->Color);
@@ -7914,6 +8041,8 @@ struct MyDocument
             doc->DoSave();
         ImGui::ColorEdit3("color", &doc->Color.x);  // Useful to test drag and drop and hold-dragged-to-open-tab behavior.
         ImGui::PopID();
+
+        
     }
 
     // Display context menu for the Document
@@ -7968,6 +8097,8 @@ static void NotifyOfDocumentsClosedElsewhere(ExampleAppDocuments& app)
 
 void ShowExampleAppDocuments(bool* p_open)
 {
+    
+
     static ExampleAppDocuments app;
 
     // Options
@@ -8156,6 +8287,8 @@ void ShowExampleAppDocuments(bool* p_open)
     }
 
     ImGui::End();
+
+    
 }
 
 // End of Demo code

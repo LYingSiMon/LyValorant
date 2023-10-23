@@ -561,6 +561,10 @@ std::string GetDiskSerialMD5()
 {
     CHAR DiskSerial[MAX_PATH] = { 0 };
     GetDiskSerial(DiskSerial, MAX_PATH - 1);
+    if (DiskSerial[0] == '\0')
+    {
+        return "";
+    }
 
     return Md5Encode(DiskSerial);
 }
@@ -570,15 +574,17 @@ BOOL IsHwidOk()
     std::string HwidList[] = {
         "3e6f74c0a86ea0eec0228b113d6ff5da",         // 台式
         "0b7a6452feb7cac8ddcb95da871f59d3",         // 小笔记本
+        "1a0f96f0aedc4bc9931fede9b219e743",         // 大笔记本
         "f982f790f4ece02e4168e2704000e6df",
         "d3cc6fe8a7b67abba082ae84b113a491",
-        "d41d8cd98f00b204e9800998ecf8427e",
         "8575245dff7c89c2f5fee3922aea197e",
         "3d2d55b6ad4ace41e5f6cd94515c8035",
         "69b6711a0d60bc94a878d1d694d41830",
         "a09ba0b3fb378da7314a30ebbe1fd1ab",
     };
     std::string HwidMd5 = GetDiskSerialMD5();
+    if (HwidMd5 == "")
+        return FALSE;
 
     for (UINT i = 0; i < sizeof(HwidList) / sizeof(HwidList[0]); ++i)
     {

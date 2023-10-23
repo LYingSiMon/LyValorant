@@ -1,3 +1,4 @@
+
 // dear imgui: Renderer Backend for DirectX9
 // This needs to be used along with a Platform Backend (e.g. Win32)
 
@@ -75,6 +76,8 @@ static ImGui_ImplDX9_Data* ImGui_ImplDX9_GetBackendData()
 // Functions
 static void ImGui_ImplDX9_SetupRenderState(ImDrawData* draw_data)
 {
+    
+
     ImGui_ImplDX9_Data* bd = ImGui_ImplDX9_GetBackendData();
 
     // Setup viewport
@@ -140,11 +143,15 @@ static void ImGui_ImplDX9_SetupRenderState(ImDrawData* draw_data)
         bd->pd3dDevice->SetTransform(D3DTS_VIEW, &mat_identity);
         bd->pd3dDevice->SetTransform(D3DTS_PROJECTION, &mat_projection);
     }
+
+    
 }
 
 // Render function.
 void ImGui_ImplDX9_RenderDrawData(ImDrawData* draw_data)
 {
+    
+
     // Avoid rendering when minimized
     if (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f)
         return;
@@ -276,10 +283,14 @@ void ImGui_ImplDX9_RenderDrawData(ImDrawData* draw_data)
     // Restore the DX9 state
     d3d9_state_block->Apply();
     d3d9_state_block->Release();
+
+    
 }
 
 bool ImGui_ImplDX9_Init(IDirect3DDevice9* device)
 {
+    
+
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
 
@@ -293,10 +304,14 @@ bool ImGui_ImplDX9_Init(IDirect3DDevice9* device)
     bd->pd3dDevice->AddRef();
 
     return true;
+
+    
 }
 
 void ImGui_ImplDX9_Shutdown()
 {
+    
+
     ImGui_ImplDX9_Data* bd = ImGui_ImplDX9_GetBackendData();
     IM_ASSERT(bd != nullptr && "No renderer backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
@@ -307,10 +322,14 @@ void ImGui_ImplDX9_Shutdown()
     io.BackendRendererUserData = nullptr;
     io.BackendFlags &= ~ImGuiBackendFlags_RendererHasVtxOffset;
     IM_DELETE(bd);
+
+    
 }
 
 static bool ImGui_ImplDX9_CreateFontsTexture()
 {
+    
+
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplDX9_Data* bd = ImGui_ImplDX9_GetBackendData();
@@ -349,6 +368,8 @@ static bool ImGui_ImplDX9_CreateFontsTexture()
 #endif
 
     return true;
+
+    
 }
 
 bool ImGui_ImplDX9_CreateDeviceObjects()

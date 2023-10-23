@@ -90,8 +90,8 @@ DWORD WINAPI Thread_MonitorGameWnd(PVOID pParam)
 		// 移动 imgui 窗口
 		MoveWindow(
 			g_ImguiHwnd,
-			GameWndRect.left, GameWndRect.top,
-			GameWndRect.right - GameWndRect.left, GameWndRect.bottom - GameWndRect.top,
+			GameWndRect.left + 1, GameWndRect.top + 1,
+			GameWndRect.right - GameWndRect.left - 2, GameWndRect.bottom - GameWndRect.top - 2,
 			TRUE);
 
 		Sleep(100);
@@ -100,6 +100,8 @@ DWORD WINAPI Thread_MonitorGameWnd(PVOID pParam)
 
 BOOL StartImguiDraw()
 {
+	VM_BEGIN2();
+
 	// 注册窗口类、创建窗口
 	WNDCLASSEX wc = {
 		sizeof(wc),
@@ -135,6 +137,12 @@ BOOL StartImguiDraw()
 	{
 		spdlog::error("SetLayeredWindowAttributes error:{}", GetLastError());
 		return FALSE;
+	}
+
+	// 反截屏
+	if (!SetWindowDisplayAffinity(g_ImguiHwnd, WDA_EXCLUDEFROMCAPTURE))
+	{
+		return 0;
 	}
 
 	// 绘制窗口跟随游戏窗口移动
@@ -287,4 +295,6 @@ BOOL StartImguiDraw()
 	::UnregisterClass(wc.lpszClassName, wc.hInstance);
 
 	return TRUE;
+
+	VM_END();
 }
