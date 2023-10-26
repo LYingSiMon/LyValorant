@@ -128,13 +128,14 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Cheat.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="Driver.cpp" />
-    <ClCompile Include="Memory.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Cheat.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="KernelStruct.h" />
-    <ClInclude Include="Memory.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

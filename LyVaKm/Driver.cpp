@@ -1,11 +1,16 @@
 #include "Common.h"
 #include "Memory.h"
+#include "Cheat.h"
 
+#include <stdio.h>
+#include <ntstrsafe.h>
 
 PDRIVER_OBJECT g_DriverObject;
 PDEVICE_OBJECT g_DeviceObject;
 UNICODE_STRING g_DeviceName;
 UNICODE_STRING g_SymLinkName;
+HANDLE g_SystemThread = NULL;
+BOOL g_TerminateThread = FALSE;
 
 NTSTATUS DriverUnload(IN PDRIVER_OBJECT DriverObject)
 {
@@ -18,6 +23,17 @@ NTSTATUS DriverUnload(IN PDRIVER_OBJECT DriverObject)
 
 	// 删除设备
 	IoDeleteDevice(g_DeviceObject);
+
+	// 结束系统线程
+	if (g_SystemThread)
+	{
+		PETHREAD SystemThread;
+		ObReferenceObjectByHandle(g_SystemThread, NULL, *PsThreadType, KernelMode, (PVOID*)&SystemThread, NULL);
+		g_TerminateThread = TRUE;
+		KeWaitForSingleObject(SystemThread, Executive, KernelMode, FALSE, NULL);
+		ObDereferenceObject(SystemThread);
+		ZwClose(g_SystemThread);
+	}
 
 	return STATUS_SUCCESS;
 }
@@ -44,12 +60,18 @@ NTSTATUS IoctlDispatcher(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp)
 		// 分配内存
 		PVOID pBuffer = ExAllocatePoolWithTag(PagedPool, pInfo->Size, POOL_TAG);
 		if (!pBuffer)
+		{
+			KdPrintEx((0, 0, "[LyVa][%s] ExAllocatePoolWithTag error \n", __FUNCTION__));
 			break;
+		}
 
 		// 读取内存
 		if (!ReadProcessMemory((HANDLE)pInfo->Pid, pInfo->Address, pInfo->Size, pBuffer))
+		{
+			KdPrintEx((0, 0, "[LyVa][%s] ReadProcessMemory error \n", __FUNCTION__));
 			break;
-		
+		}
+
 		// 返回给 r3
 		RtlCopyMemory(OutputBuffer, pBuffer, OutputBufferLength);
 
@@ -67,12 +89,43 @@ NTSTATUS IoctlDispatcher(_In_ PDEVICE_OBJECT DeviceObject, _In_ PIRP Irp)
 		// 获取模块基地址
 		CTLINFO_GET_MODULEBASE_RET Result = { 0 };
 		if (!GetModuleBaseByPid((HANDLE)pInfo->Pid, pInfo->ModuleName, &Result))
+		{
+			KdPrintEx((0, 0, "[LyVa][%s] GetModuleBaseByPid error \n", __FUNCTION__));
 			break;
+		}
 
 		// 返回给 r3
 		RtlCopyMemory(OutputBuffer, &Result, sizeof(CTLINFO_GET_MODULEBASE_RET));
 
 		Info = sizeof(CTLINFO_GET_MODULEBASE_RET);
+		break;
+	}
+	case CTL_CODE(FILE_DEVICE_UNKNOWN, CTL_SEND_R3_VAR, METHOD_BUFFERED, FILE_ANY_ACCESS):
+	{
+		R3Var* pInfo = (R3Var*)InputBuffer;
+		KdPrintEx((0, 0, "[LyVa][%s] CTL_SEND_VAR_ADDRESS | Param:%d,%d,%llx,%llx,%llx, \n", __FUNCTION__, 
+			pInfo->Pid_Game,
+			pInfo->Pid_LyVaUm,
+			pInfo->Base_Exe, 
+			pInfo->Base_PlayerInfo, 
+			pInfo->Base_DrvReceiver));
+
+		// 保存到全局变量
+		g_GameInfo.Pid_Game = pInfo->Pid_Game;
+		g_GameInfo.Pid_LyVaUm = pInfo->Pid_LyVaUm;
+		g_GameInfo.Base_exe = pInfo->Base_Exe;
+		g_GameInfo.Base_PlayerInfo = pInfo->Base_PlayerInfo;
+		g_pR3Receiver = pInfo->Base_DrvReceiver;
+
+		// 创建系统线程
+		Status = PsCreateSystemThread(&g_SystemThread, THREAD_ALL_ACCESS, NULL, NULL, NULL, SystemThreadRoutine, NULL);
+		if (!NT_SUCCESS(Status))
+		{
+			KdPrintEx((0, 0, "[LyVa][%s] PsCreateSystemThread error \n", __FUNCTION__));
+			break;
+		}
+
+		Info = sizeof(BOOL);
 		break;
 	}
     default:

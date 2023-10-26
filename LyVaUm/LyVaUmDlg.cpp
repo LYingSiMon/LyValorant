@@ -7,6 +7,7 @@
 #include "LyVaUm.h"
 #include "LyVaUmDlg.h"
 #include "afxdialogex.h"
+#include "spdlog/spdlog.h"
 
 #include "Common.h"
 #include "Cheat.h"
@@ -145,12 +146,17 @@ BOOL CLyVaUmDlg::OnInitDialog()
 			// 提示
 			MessageBox("启动成功");
 
-			// 设置定时器
-			SetTimer(TimerId_MonitorPlayersInfo, 10, NULL);
+			// 创建数据监控线程
+			CreateThread(0, 0, Thread_MonitorPlayersInfo, 0, 0, 0);
 
 			// 绘制
 			StartImguiDraw();
 		}
+	}
+	else
+	{
+		// 初始化日志
+		AllocConsole();
 	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -209,9 +215,6 @@ void CLyVaUmDlg::OnBnClickedButtonStart()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	// 初始化日志
-	AllocConsole();
-
 	// 初始化作弊器
 	if (!CheatInit())
 	{
@@ -219,25 +222,25 @@ void CLyVaUmDlg::OnBnClickedButtonStart()
 		return;
 	}
 
-	// 设置定时器
-	SetTimer(TimerId_MonitorPlayersInfo, 10, NULL);
+	// 监控数据
+#if 1
+	// 设置定时器（定时器会影响 imgui 的 fps）
+	//SetTimer(TimerId_MonitorPlayersInfo, 1, NULL);
 	SetTimer(TimerId_DisPlayPlayersInfo, 100, NULL);
+#endif
+	CreateThread(0, 0, Thread_MonitorPlayersInfo, 0, 0, 0);
 
 	// 绘制
 	StartImguiDraw();
+
 }
 
 void CLyVaUmDlg::MonitorPlayersInfo()
 {
-
-#if 0
-	// 这个指针有时候会指向一个无效地址
-	ULONG_PTR Offset_Matrix[] = { g_GameInfo.Base_PlayerInfo, 0x8, 0x18, 0xb0, 0x78, 0xd0, 0xf30 };
-	ReadProcMemByOffset(g_GameInfo.HProc, Offset_Matrix, 6, &g_GameInfo.Matrix, sizeof(g_GameInfo.Matrix));
-#endif
+#if 1
+	// 方案1：发送 ioctrl 请求驱动
 	ULONG_PTR Offset_Matrix[] = { 0xf6db50 };
 	ReadProcMemByOffset(g_GameInfo.HProc, Offset_Matrix, 0, &g_GameInfo.Matrix, sizeof(g_GameInfo.Matrix));
-
 	MatrixTransit();
 	
 	for (UINT i = 0; i < 10; ++i)
@@ -249,7 +252,6 @@ void CLyVaUmDlg::MonitorPlayersInfo()
 		ULONG_PTR Offset_Y[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0x440, 0x14c };
 		ULONG_PTR Offset_Z[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0x440, 0x150 };
 		
-
 		ReadProcMemByOffset(g_GameInfo.HProc, Offset_Self, 7, &g_PlayerInfo[i].Self, sizeof(BYTE));
 		ReadProcMemByOffset(g_GameInfo.HProc, Offset_Camp, 7, &g_PlayerInfo[i].Camp, sizeof(BYTE));
 		ReadProcMemByOffset(g_GameInfo.HProc, Offset_Health, 7, &g_PlayerInfo[i].Health, sizeof(FLOAT));
@@ -267,7 +269,41 @@ void CLyVaUmDlg::MonitorPlayersInfo()
 			g_GameInfo.SelfXYZ[2] = g_PlayerInfo[i].Z;
 		}
 	}
+#endif
 
+#if 0
+	// 方案2：驱动主动赋值
+	for (UINT i = 0; i < 4; ++i)
+	{
+		for (UINT j = 0; j < 4; ++j)
+		{
+			g_GameInfo.Matrix[i][j] = g_DrvReceiver.Matrix[i][j];
+		}
+	}
+	MatrixTransit();
+
+	for (UINT i = 0; i < 10; ++i)
+	{
+		g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+		g_PlayerInfo[i].Camp = g_DrvReceiver.Players[i].Camp;
+		g_PlayerInfo[i].Health = g_DrvReceiver.Players[i].Health;
+		g_PlayerInfo[i].X = g_DrvReceiver.Players[i].X;
+		g_PlayerInfo[i].Y = g_DrvReceiver.Players[i].Y;
+		g_PlayerInfo[i].Z = g_DrvReceiver.Players[i].Z;
+		g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+		g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+
+		GameXYZToScreen(g_PlayerInfo[i].X, g_PlayerInfo[i].Y, g_PlayerInfo[i].Z, i);
+
+		if (g_PlayerInfo[i].Self == 1)
+		{
+			g_GameInfo.SelfCamp = g_PlayerInfo[i].Camp;
+			g_GameInfo.SelfXYZ[0] = g_PlayerInfo[i].X;
+			g_GameInfo.SelfXYZ[1] = g_PlayerInfo[i].Y;
+			g_GameInfo.SelfXYZ[2] = g_PlayerInfo[i].Z;
+		}
+	}
+#endif
 }
 
 void CLyVaUmDlg::DisPlayPlayersInfo()
@@ -334,7 +370,7 @@ void CLyVaUmDlg::OnBnClickedButtonStop()
 	// TODO: 在此添加控件通知处理程序代码
 
 	// 删除定时器
-	KillTimer(TimerId_MonitorPlayersInfo);
+	//KillTimer(TimerId_MonitorPlayersInfo);
 	KillTimer(TimerId_DisPlayPlayersInfo);
 }
 
@@ -377,6 +413,16 @@ int CLyVaUmDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		exit(0);
 	}
 	strcat_s(Dir, "\\LyVaKm.sys");
+	if (!StopDvr(DRV_SERVICE_NAME))
+	{
+		MessageBox("服务停止失败");
+		exit(0);
+	}
+	if (!UninstallDvr(DRV_SERVICE_NAME))
+	{
+		MessageBox("驱动卸载失败");
+		exit(0);
+	}
 	if (!InstallDvr(Dir, DRV_SERVICE_NAME))
 	{
 		MessageBox("驱动安装失败");

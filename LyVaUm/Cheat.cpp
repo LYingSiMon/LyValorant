@@ -8,6 +8,7 @@
 GameInfo g_GameInfo;
 PlayerInfo g_PlayerInfo[0x10] = {0};
 HANDLE g_hDevice;
+DrvReceiver g_DrvReceiver = { 0 };
 
 ULONG_PTR GetPlayerInfoBase(ULONG_PTR SignatureAddr)
 {
@@ -91,6 +92,18 @@ BOOL CheatInit()
 	g_GameInfo.Base_PlayerInfo = GetPlayerInfoBase(SignPlayerInfo);
 	spdlog::info("Base_PlayerInfo:{0:x}", g_GameInfo.Base_PlayerInfo);
 
+#if 0
+	// 把 R3 变量传给驱动
+	spdlog::info("g_DrvReceiver address {0:x}", (ULONG_PTR)&g_DrvReceiver);
+	R3Var VarInfo = { 0 };
+	VarInfo.Pid_Game = g_GameInfo.Pid;
+	VarInfo.Pid_LyVaUm = GetCurrentProcessId();
+	VarInfo.Base_Exe = g_GameInfo.Base_exe;
+	VarInfo.Base_PlayerInfo = g_GameInfo.Base_PlayerInfo;
+	VarInfo.Base_DrvReceiver = (ULONG_PTR)&g_DrvReceiver;
+	DrvSendR3Var(VarInfo);
+#endif
+
 	return TRUE;
 }
 
@@ -102,7 +115,6 @@ FLOAT CalculateDistance(FLOAT x1, FLOAT y1, FLOAT z1, FLOAT x2, FLOAT y2, FLOAT 
 BOOL GameXYZToScreen(FLOAT mcax, FLOAT mcay, FLOAT mcaz, DWORD Index)
 {
 	// 获取游戏窗口矩形
-	::GetWindowRect(g_GameInfo.Hwnd, &g_GameInfo.GameWndRect);
 	FLOAT WndWidth = (FLOAT)g_GameInfo.GameWndRect.right - (FLOAT)g_GameInfo.GameWndRect.left;
 	FLOAT WndHeight = (FLOAT)g_GameInfo.GameWndRect.bottom - (FLOAT)g_GameInfo.GameWndRect.top;
 	
@@ -161,4 +173,83 @@ VOID MatrixTransit()
 	}
 
 	g_GameInfo.Matrix[0][2] = 0;
+}
+
+DWORD Thread_MonitorPlayersInfo(PVOID pParam)
+{
+	while (1)
+	{
+#if 1
+		// 方案1：发送 ioctrl 请求数据
+		ULONG_PTR Offset_Matrix[] = { 0xf6db50 };
+		ReadProcMemByOffset(g_GameInfo.HProc, Offset_Matrix, 0, &g_GameInfo.Matrix, sizeof(g_GameInfo.Matrix));
+
+		MatrixTransit();
+
+		for (UINT i = 0; i < 10; ++i)
+		{
+			ULONG_PTR Offset_Self[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x218, 0x790, 0xf8 };
+			ULONG_PTR Offset_Camp[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x218, 0x628, 0xf8 };
+			ULONG_PTR Offset_Health[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0xa00, 0x1b0 };
+			ULONG_PTR Offset_X[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0x440, 0x148 };
+			ULONG_PTR Offset_Y[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0x440, 0x14c };
+			ULONG_PTR Offset_Z[] = { g_GameInfo.Base_PlayerInfo, 0x280, 0x38, 0x50,i * 0x8, 0x228, 0x440, 0x150 };
+
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_Self, 7, &g_PlayerInfo[i].Self, sizeof(BYTE));
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_Camp, 7, &g_PlayerInfo[i].Camp, sizeof(BYTE));
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_Health, 7, &g_PlayerInfo[i].Health, sizeof(FLOAT));
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_X, 7, &g_PlayerInfo[i].X, sizeof(FLOAT));
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_Y, 7, &g_PlayerInfo[i].Y, sizeof(FLOAT));
+			ReadProcMemByOffset(g_GameInfo.HProc, Offset_Z, 7, &g_PlayerInfo[i].Z, sizeof(FLOAT));
+
+			GameXYZToScreen(g_PlayerInfo[i].X, g_PlayerInfo[i].Y, g_PlayerInfo[i].Z, i);
+
+			if (g_PlayerInfo[i].Self == 1)
+			{
+				g_GameInfo.SelfCamp = g_PlayerInfo[i].Camp;
+				g_GameInfo.SelfXYZ[0] = g_PlayerInfo[i].X;
+				g_GameInfo.SelfXYZ[1] = g_PlayerInfo[i].Y;
+				g_GameInfo.SelfXYZ[2] = g_PlayerInfo[i].Z;
+			}
+		}
+#endif
+
+#if 0 
+		// 方案2：驱动主动赋值
+		for (UINT i = 0; i < 4; ++i)
+		{
+			for (UINT j = 0; j < 4; ++j)
+			{
+				g_GameInfo.Matrix[i][j] = g_DrvReceiver.Matrix[i][j];
+			}
+		}
+		MatrixTransit();
+
+		for (UINT i = 0; i < 10; ++i)
+		{
+			g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+			g_PlayerInfo[i].Camp = g_DrvReceiver.Players[i].Camp;
+			g_PlayerInfo[i].Health = g_DrvReceiver.Players[i].Health;
+			g_PlayerInfo[i].X = g_DrvReceiver.Players[i].X;
+			g_PlayerInfo[i].Y = g_DrvReceiver.Players[i].Y;
+			g_PlayerInfo[i].Z = g_DrvReceiver.Players[i].Z;
+			g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+			g_PlayerInfo[i].Self = g_DrvReceiver.Players[i].Self;
+
+			GameXYZToScreen(g_PlayerInfo[i].X, g_PlayerInfo[i].Y, g_PlayerInfo[i].Z, i);
+
+			if (g_PlayerInfo[i].Self == 1)
+			{
+				g_GameInfo.SelfCamp = g_PlayerInfo[i].Camp;
+				g_GameInfo.SelfXYZ[0] = g_PlayerInfo[i].X;
+				g_GameInfo.SelfXYZ[1] = g_PlayerInfo[i].Y;
+				g_GameInfo.SelfXYZ[2] = g_PlayerInfo[i].Z;
+			}
+		}
+#endif
+
+		Sleep(10);
+	}
+
+	return 0;
 }

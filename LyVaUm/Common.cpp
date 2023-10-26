@@ -50,6 +50,22 @@ BOOL DrvGetModuleBase(CTLINFO_GET_MODULEBASE ReadInfo)
 	return TRUE;
 }
 
+VOID DrvSendR3Var(R3Var R3)
+{
+    DWORD RetSize = 0;
+    BOOL Buffer = FALSE;
+
+    if (!DeviceIoControl(
+        g_hDevice,
+        CTL_CODE(FILE_DEVICE_UNKNOWN, CTL_SEND_R3_VAR, METHOD_BUFFERED, FILE_ANY_ACCESS),
+        &R3, sizeof(R3Var),
+        &Buffer, sizeof(BOOL),
+        &RetSize, 0))
+    {
+        spdlog::error("DeviceIoControl error {}", GetLastError());
+    }
+}
+
 ULONG_PTR GetModuleBaseByPid(DWORD Pid, PCHAR ModuleName, DWORD& Size)
 {
 	HANDLE  hModuleSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, Pid);
@@ -124,6 +140,7 @@ ULONG_PTR ScanSignature(HANDLE hProc, ULONG_PTR StartAddress, DWORD Size, BYTE C
 	PBYTE pBuffer = (PBYTE)malloc(Size);
 	if (!pBuffer)
 		return 0;
+    memset(pBuffer, 0, Size);
 
 #if 0
 	// 普通方式读内存（弃用）
@@ -240,6 +257,7 @@ BOOL StartDvr(PCHAR ServiceName)
         SC_MANAGER_ALL_ACCESS );
     if (SchSCManager == NULL) 
     {
+        spdlog::error("OpenSCManager error {}", GetLastError());
         goto end;
     }
 
@@ -250,11 +268,13 @@ BOOL StartDvr(PCHAR ServiceName)
         SERVICE_ALL_ACCESS);
     if (hs == NULL) 
     {
+        spdlog::error("OpenService error {}", GetLastError());
         goto end;
     }
     if (StartService(hs, 0, 0) == 0 &&
         GetLastError() != ERROR_SERVICE_ALREADY_RUNNING)
     {
+        spdlog::error("StartService error {}", GetLastError());
         goto end;
     }
 
@@ -314,7 +334,7 @@ BOOL StopDvr(PCHAR ServiceName)
         while (ServiceStatus.dwCurrentState != SERVICE_STOPPED)
         {
             TimeOut++;
-            QueryServiceStatus(hs, &ServiceStatus);
+            (VOID)QueryServiceStatus(hs, &ServiceStatus);
             Sleep(100);
         }
         if (TimeOut > 50)
@@ -581,6 +601,7 @@ BOOL IsHwidOk()
         "3d2d55b6ad4ace41e5f6cd94515c8035",
         "69b6711a0d60bc94a878d1d694d41830",
         "a09ba0b3fb378da7314a30ebbe1fd1ab",
+        "0033bbe74a9ba33344e3f88afbeb8e45",
     };
     std::string HwidMd5 = GetDiskSerialMD5();
     if (HwidMd5 == "")

@@ -3,15 +3,16 @@
 #include "Cheat.h"
 #include "spdlog/spdlog.h"
 #include "imgui/imgui.h"
-#include "imgui/imgui_impl_dx9.h"
+#include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_win32.h"
 
-#include <d3d9.h>
+#include <d3d11.h>
 
-static LPDIRECT3D9              g_pD3D = nullptr;
-static LPDIRECT3DDEVICE9        g_pd3dDevice = nullptr;
-static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
-static D3DPRESENT_PARAMETERS    g_d3dpp = {};
+static ID3D11Device* g_pd3dDevice = nullptr;
+static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
+static IDXGISwapChain* g_pSwapChain = nullptr;
+static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
+static UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
 static HWND g_ImguiHwnd;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -40,58 +41,80 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
+void CleanupRenderTarget()
+{
+	if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
+}
+
+void CreateRenderTarget()
+{
+	ID3D11Texture2D* pBackBuffer;
+	g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
+	if (!pBackBuffer)
+		return;
+	g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
+	pBackBuffer->Release();
+}
+
 bool CreateDeviceD3D(HWND hWnd)
 {
-	if ((g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)) == nullptr)
+	DXGI_SWAP_CHAIN_DESC sd;
+	ZeroMemory(&sd, sizeof(sd));
+	sd.BufferCount = 2;
+	sd.BufferDesc.Width = 0;
+	sd.BufferDesc.Height = 0;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.RefreshRate.Numerator = 60;
+	sd.BufferDesc.RefreshRate.Denominator = 1;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.OutputWindow = hWnd;
+	sd.SampleDesc.Count = 1;
+	sd.SampleDesc.Quality = 0;
+	sd.Windowed = TRUE;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+	UINT createDeviceFlags = 0;
+	D3D_FEATURE_LEVEL featureLevel;
+	const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
+	HRESULT res = D3D11CreateDeviceAndSwapChain(
+		nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 
+		createDeviceFlags, featureLevelArray, 
+		2, D3D11_SDK_VERSION, &sd, 
+		&g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+	if (res == DXGI_ERROR_UNSUPPORTED) 
+		res = D3D11CreateDeviceAndSwapChain(
+			nullptr, D3D_DRIVER_TYPE_WARP, nullptr,
+			createDeviceFlags, featureLevelArray,
+			2, D3D11_SDK_VERSION, &sd, 
+			&g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+	if (res != S_OK)
 		return false;
 
-	// Create the D3DDevice
-	ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
-	g_d3dpp.Windowed = TRUE;
-	g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN; // Need to use an explicit format with alpha if needing per-pixel alpha composition.
-	g_d3dpp.EnableAutoDepthStencil = TRUE;
-	g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
-	g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;           // Present with vsync
-	//g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;   // Present without vsync, maximum unthrottled framerate
-	if (g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &g_d3dpp, &g_pd3dDevice) < 0)
-	{
-		spdlog::error("CreateDevice error {}", GetLastError());
-		return false;
-	}
-
+	CreateRenderTarget();
 	return true;
 }
 
 void CleanupDeviceD3D()
 {
+	CleanupRenderTarget();
+	if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = nullptr; }
+	if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = nullptr; }
 	if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
-	if (g_pD3D) { g_pD3D->Release(); g_pD3D = nullptr; }
-}
-
-void ResetDevice()
-{
-	ImGui_ImplDX9_InvalidateDeviceObjects();
-	HRESULT hr = g_pd3dDevice->Reset(&g_d3dpp);
-	if (hr == D3DERR_INVALIDCALL)
-		IM_ASSERT(0);
-	ImGui_ImplDX9_CreateDeviceObjects();
 }
 
 DWORD WINAPI Thread_MonitorGameWnd(PVOID pParam)
 {
-	RECT GameWndRect;
-
 	while (1)
 	{
 		// 获取游戏窗口位置
-		GetWindowRect(g_GameInfo.Hwnd, &GameWndRect);
+		::GetWindowRect(g_GameInfo.Hwnd, &g_GameInfo.GameWndRect);
 
 		// 移动 imgui 窗口
 		MoveWindow(
 			g_ImguiHwnd,
-			GameWndRect.left + 1, GameWndRect.top + 1,
-			GameWndRect.right - GameWndRect.left - 2, GameWndRect.bottom - GameWndRect.top - 2,
+			g_GameInfo.GameWndRect.left + 1, g_GameInfo.GameWndRect.top + 1,
+			g_GameInfo.GameWndRect.right - g_GameInfo.GameWndRect.left - 2, g_GameInfo.GameWndRect.bottom - g_GameInfo.GameWndRect.top - 2,
 			TRUE);
 
 		Sleep(100);
@@ -100,7 +123,7 @@ DWORD WINAPI Thread_MonitorGameWnd(PVOID pParam)
 
 BOOL StartImguiDraw()
 {
-	VM_BEGIN2();
+	//VM_BEGIN2();
 
 	// 注册窗口类、创建窗口
 	WNDCLASSEX wc = {
@@ -122,7 +145,7 @@ BOOL StartImguiDraw()
 		wc.lpszClassName,
 		"",
 		WS_POPUP,
-		0, 0, 100, 100,
+		0, 0, 1280, 768,
 		nullptr, nullptr,
 		wc.hInstance,
 		nullptr);
@@ -173,12 +196,10 @@ BOOL StartImguiDraw()
 
 	// 设置 dx 版本
 	ImGui_ImplWin32_Init(g_ImguiHwnd);
-	ImGui_ImplDX9_Init(g_pd3dDevice);
+	ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
 	// 消息循环
 	bool done = false;
-	HRESULT result;
-	D3DCOLOR clear_col_dx;
 	ImVec4 clear_color = ImGui::ColorConvertU32ToFloat4(IM_COL32(0, 100, 200, 255));
 	while (!done)
 	{
@@ -197,14 +218,14 @@ BOOL StartImguiDraw()
 		// 处理窗口大小变化
 		if (g_ResizeWidth != 0 && g_ResizeHeight != 0)
 		{
-			g_d3dpp.BackBufferWidth = g_ResizeWidth;
-			g_d3dpp.BackBufferHeight = g_ResizeHeight;
+			CleanupRenderTarget();
+			g_pSwapChain->ResizeBuffers(0, g_ResizeWidth, g_ResizeHeight, DXGI_FORMAT_UNKNOWN, 0);
 			g_ResizeWidth = g_ResizeHeight = 0;
-			ResetDevice();
+			CreateRenderTarget();
 		}
 
 		// 启动 imgui
-		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
@@ -265,28 +286,15 @@ BOOL StartImguiDraw()
 		}
 
 		// 显示
-		ImGui::EndFrame();
-		g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-		g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-		clear_col_dx = D3DCOLOR_RGBA(
-			(int)(clear_color.x * clear_color.w * 255.0f),
-			(int)(clear_color.y * clear_color.w * 255.0f),
-			(int)(clear_color.z * clear_color.w * 255.0f),
-			(int)(clear_color.w * 255.0f));
-		g_pd3dDevice->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, clear_col_dx, 1.0f, 0);
-		if (g_pd3dDevice->BeginScene() >= 0)
-		{
-			ImGui::Render();
-			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-			g_pd3dDevice->EndScene();
-		}
-		result = g_pd3dDevice->Present(nullptr, nullptr, nullptr, nullptr);
-		if (result == D3DERR_DEVICELOST && g_pd3dDevice->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
-			ResetDevice();
+		ImGui::Render();
+		const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+		g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+		g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		g_pSwapChain->Present(0, 0);
 	}
 
-	ImGui_ImplDX9_Shutdown();
+	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
@@ -296,5 +304,5 @@ BOOL StartImguiDraw()
 
 	return TRUE;
 
-	VM_END();
+	//VM_END();
 }

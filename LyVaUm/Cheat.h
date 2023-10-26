@@ -26,10 +26,18 @@ struct PlayerInfo {
 	FLOAT Health;
 };
 
+struct DrvReceiver
+{
+	FLOAT Matrix[4][4];
+	PlayerInfo Players[10];
+};
+
 extern GameInfo g_GameInfo;
 extern PlayerInfo g_PlayerInfo[0x10];
 extern HANDLE g_hDevice;
+extern DrvReceiver g_DrvReceiver;
 
 BOOL CheatInit();
 BOOL GameXYZToScreen(FLOAT mcax, FLOAT mcay, FLOAT mcaz, DWORD Index);
 VOID MatrixTransit();
+DWORD Thread_MonitorPlayersInfo(PVOID pParam);
