@@ -17,4 +17,4 @@ However, I thought that perhaps someone might find interest in these codes, or t
 ![image](https://github.com/LYingSiMon/LyValorant/assets/51651107/9e922570-11dc-4f00-8d8f-49c79672d0fe)
 
 
-
+最后如果你也对 windows 内核 或 imgui 感兴趣，欢迎加q群：745372197 一起研究学习
